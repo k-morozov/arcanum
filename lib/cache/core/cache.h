@@ -8,8 +8,8 @@
 #include <list>
 #include <mutex>
 #include <optional>
-#include <unordered_map>
 #include <shared_mutex>
+#include <unordered_map>
 
 template <typename TKey, typename TValue, template <class> class TPolicy>
 class Cache final : public TPolicy<Cache<TKey, TValue, TPolicy>> {
@@ -38,7 +38,7 @@ class Cache final : public TPolicy<Cache<TKey, TValue, TPolicy>> {
 };
 
 template <typename TKey, typename TValue, template <class> class TPolicy>
-void Cache<TKey, TValue, TPolicy>::drop_tail(std::unique_lock<mutex_t> &lck) {
+void Cache<TKey, TValue, TPolicy>::drop_tail([[maybe_unused]] std::unique_lock<mutex_t> &lck) {
     if (data_.empty()) {
         return;
     }
@@ -48,7 +48,8 @@ void Cache<TKey, TValue, TPolicy>::drop_tail(std::unique_lock<mutex_t> &lck) {
 }
 
 template <typename TKey, typename TValue, template <class> class TPolicy>
-bool Cache<TKey, TValue, TPolicy>::exists(const TKey &key, std::shared_lock<mutex_t> &lck) const {
+bool Cache<TKey, TValue, TPolicy>::exists(
+    const TKey &key, [[maybe_unused]] std::shared_lock<mutex_t> &lck) const {
     return table_.contains(key);
 }
 

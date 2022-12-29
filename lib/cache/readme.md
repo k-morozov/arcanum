@@ -4,3 +4,7 @@
 - проработать многопоточку
 - проработать хеш-таблицы (видео + deduction guide)
 - external polymorphism
+
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files
