@@ -14,7 +14,7 @@ set_target_properties(${APP_NAME} PROPERTIES
 
 target_sources(${APP_NAME} PUBLIC
         main.cpp
-        basic.cpp
+        test_lru_policy.cpp
         )
 
 include_directories(${CONAN_INCLUDE_DIRS})

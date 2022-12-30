@@ -1,6 +1,18 @@
 BasedOnStyle: LLVM
 IndentWidth: 4
 ColumnLimit: 100
-SortIncludes:  CaseSensitive
-AlignAfterOpenBracket:  AlwaysBreak
+SortIncludes: CaseSensitive
+AlignAfterOpenBracket: AlwaysBreak
 AlignArrayOfStructures: Right
+SpaceBeforeParens: Custom
+IndentRequiresClause: true
+RequiresClausePosition: OwnLine
+SpaceBeforeParensOptions:
+  AfterControlStatements: true
+  AfterFunctionDefinitionName: false
+PointerAlignment: Left
+AlwaysBreakTemplateDeclarations: Yes
+AlwaysBreakAfterReturnType: TopLevelDefinitions
+AlwaysBreakAfterDefinitionReturnType: TopLevel
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: None
