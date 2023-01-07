@@ -11,8 +11,3 @@ template <typename T>
 concept Hashable = requires(T a) {
                        { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
                    };
-
-// template<typename T, typename U>
-// concept Equal = requires(T a, U b) {
-//
-// };
