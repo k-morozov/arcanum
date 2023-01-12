@@ -9,9 +9,11 @@
 
 #include <memory>
 
-template <class Callable>
-constexpr detail::vtable vtable_for{
-    [](void* p) { static_cast<Callable*>(p)->operator()(); },
+template <class Callable, typename R, typename... Args>
+constexpr detail::vtable<R, Args...> vtable_for{
+    [](void* p, Args... args) -> R {
+        return static_cast<Callable*>(p)->operator()(std::forward<Args>(args)...);
+    },
     [](void* p) { std::destroy_at(static_cast<Callable*>(p)); }};
 
 #endif // ARCANUM_VTABLE_FOR_H

@@ -6,8 +6,10 @@
 #define ARCANUM_VTABLE_HPP
 
 namespace detail {
+
+template <typename R, typename... Args>
 struct vtable {
-    void (*run)(void* p);
+    R (*run)(void* p, Args... args);
     void (*destroy)(void* p);
 };
 } // namespace detail

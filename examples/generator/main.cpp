@@ -14,12 +14,15 @@ struct resumable {
             return resumable(coro_handle::from_promise(*this));
         }
         auto initial_suspend() {
+            std::cout << "init" << std::endl;
             return std::suspend_always();
         }
         auto final_suspend() noexcept {
+            std::cout << "final" << std::endl;
             return std::suspend_always();
         }
         void return_void() {
+            std::cout << "return" << std::endl;
         }
         void unhandled_exception() {
             std::terminate();
@@ -51,6 +54,7 @@ foo() {
 int
 main() {
     auto c = foo();
+    std::cout << "size coro = " << sizeof(c) << std::endl;
     c.resume();
     std::cout << "===" << std::endl;
     c.resume();
