@@ -20,8 +20,8 @@ class TaskWrapper final {
 
     void operator()() {
         if (vtable_) {
+            vtable_->run(&buf_);
         }
-        vtable_->run(&buf_);
     }
 
     ~TaskWrapper() {
