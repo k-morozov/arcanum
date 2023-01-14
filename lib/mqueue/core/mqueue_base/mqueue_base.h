@@ -11,6 +11,7 @@
 #include <mutex>
 #include <queue>
 #include <shared_mutex>
+#include <stop_token>
 
 template <std::invocable T>
 class mqueue_base {
@@ -23,15 +24,16 @@ class mqueue_base {
 
   public:
     ~mqueue_base() {
-        is_shutdown.store(true);
-        cv_.notify_all();
+        stop_.request_stop();
     }
 
     template <std::invocable U>
     void push(U&& task) {
-        if (is_shutdown.load()) {
+        auto token = stop_.get_token();
+        if (token.stop_requested()) {
             return;
         }
+
         {
             lock_guard lck(m_);
             tasks_.push(std::forward<U>(task));
@@ -40,18 +42,22 @@ class mqueue_base {
     }
 
     [[nodiscard]] pop_t wait_and_pop() {
-        if (is_shutdown.load()) {
+        auto token = stop_.get_token();
+        if (token.stop_requested()) {
             return {};
         }
 
         using namespace std::chrono_literals;
+        // @TODO think: using in cv_any?
         unique_lock lck(m_);
-        cv_.wait_for(
-            lck, wait_timeout * 1s, [this, &lck] { return !is_empty(lck) || is_shutdown.load(); });
-        if (is_shutdown.load()) {
-            return {};
-        }
-        return pop(lck);
+        do {
+            cv_.wait_for(lck, token, wait_timeout * 1s, [this, &lck] { return !is_empty(lck); });
+            if (token.stop_requested()) {
+                return {};
+            }
+        } while (is_empty(lck));
+
+        return pop_impl(lck);
     }
 
     bool empty() const {
@@ -62,15 +68,14 @@ class mqueue_base {
   private:
     std::queue<T> tasks_;
     mutable mutex_t m_;
-    std::condition_variable cv_;
-
-    std::atomic_bool is_shutdown{false};
+    std::condition_variable_any cv_;
+    std::stop_source stop_;
 
     bool is_empty([[maybe_unused]] unique_lock& lck) const {
         return tasks_.empty();
     }
 
-    [[nodiscard]] pop_t pop(unique_lock& lck) {
+    [[deprecated("cv wo it")]] [[nodiscard]] pop_t pop(unique_lock& lck) {
         if (is_empty(lck)) {
             return {};
         }
@@ -78,7 +83,7 @@ class mqueue_base {
         return pop_impl(lck);
     }
 
-    pop_t pop_impl([[maybe_unused]] unique_lock& lck) {
+    [[nodiscard]] pop_t pop_impl([[maybe_unused]] unique_lock& lck) {
         pop_t res = std::make_shared<T>(std::move(tasks_.front()));
         tasks_.pop();
         return res;

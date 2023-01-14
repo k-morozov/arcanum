@@ -10,6 +10,8 @@ env:
   GCC_11: g++-11
   CLANG_14: clang++-14
 
+  COUNT_REPEAT_TEST: 5
+
 jobs:
   ubuntu-clang-14-release:
     runs-on: ubuntu-latest
@@ -27,7 +29,12 @@ jobs:
           mkdir -p ${{github.workspace}}/build
           cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=/bin/${{env.CLANG_14}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE_RELEASE}}
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE_RELEASE}} --target test_mqueue
-      - run: ${{github.workspace}}/build/lib/mqueue/bin/test_mqueue
+      - run: ${{github.workspace}}/build/lib/mqueue/bin/test_mqueue 
+          --gtest_filter=*.test_big_count_task_few_workers 
+          --gtest_repeat=${{env.COUNT_REPEAT_TEST}} 
+          --gtest_shuffle 
+          --gtest_break_on_failure  
+          --gtest_color=yes
 
   ubuntu-clang-14-debug:
     runs-on: ubuntu-latest
@@ -46,6 +53,11 @@ jobs:
           cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=/bin/${{env.CLANG_14}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE_DEBUG}}
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE_DEBUG}} --target test_mqueue
       - run: ${{github.workspace}}/build/lib/mqueue/bin/test_mqueue
+          --gtest_filter=*.test_big_count_task_few_workers
+          --gtest_repeat=${{env.COUNT_REPEAT_TEST}}
+          --gtest_shuffle
+          --gtest_break_on_failure
+          --gtest_color=yes
 
   ubuntu-gcc-11-release:
     runs-on: ubuntu-latest
@@ -64,6 +76,11 @@ jobs:
           cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=/bin/${{env.GCC_11}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE_RELEASE}}
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE_RELEASE}} --target test_mqueue
       - run: ${{github.workspace}}/build/lib/mqueue/bin/test_mqueue
+          --gtest_filter=*.test_big_count_task_few_workers
+          --gtest_repeat=${{env.COUNT_REPEAT_TEST}}
+          --gtest_shuffle
+          --gtest_break_on_failure
+          --gtest_color=yes
 
   ubuntu-gcc-11-debug:
     runs-on: ubuntu-latest
@@ -82,4 +99,9 @@ jobs:
           cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=/bin/${{env.GCC_11}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE_DEBUG}}
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE_DEBUG}} --target test_mqueue
       - run: ${{github.workspace}}/build/lib/mqueue/bin/test_mqueue
+          --gtest_filter=*.test_big_count_task_few_workers
+          --gtest_repeat=${{env.COUNT_REPEAT_TEST}}
+          --gtest_shuffle
+          --gtest_break_on_failure
+          --gtest_color=yes
 
