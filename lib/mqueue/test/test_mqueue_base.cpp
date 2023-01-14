@@ -56,7 +56,7 @@ class Basic : public ::testing::Test {
                          j < config.count_task_for_producer * (i) + config.count_task_for_producer;
                          j++) {
                         q.push([j, this] {
-                            std::lock_guard lck(m_);
+                            std::lock_guard lck(m);
                             data_[j]++;
                         });
                         push_tasks++;
@@ -86,7 +86,7 @@ class Basic : public ::testing::Test {
     using future_consume_t = std::future<int>;
     using task_consume_t = std::shared_ptr<future_consume_t>;
 
-    std::mutex m_;
+    std::mutex m;
     std::unordered_map<int, int> data_;
 
     std::vector<task_t> fproducers_;

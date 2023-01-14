@@ -25,6 +25,7 @@ class mqueue_base {
   public:
     ~mqueue_base() {
         stop_.request_stop();
+        // @TODO notify and wait?
     }
 
     template <std::invocable U>
