@@ -48,11 +48,12 @@ class mqueue_base {
         }
 
         using namespace std::chrono_literals;
-        // @TODO think: using in cv_any?
+
         unique_lock lck(m_);
         while (true) {
-            const bool is_timeout = !cv_.wait_for(
-                lck, token, wait_timeout * 1s, [this, &lck] { return !tasks_.empty(); });
+            const bool is_timeout = !cv_.wait_for(lck, wait_timeout * 1s, [this, &lck, &token] {
+                return !tasks_.empty() || token.stop_requested();
+            });
             if (token.stop_requested()) {
                 return {};
             }
@@ -75,7 +76,7 @@ class mqueue_base {
   private:
     std::queue<T> tasks_;
     mutable mutex_t m_;
-    std::condition_variable_any cv_;
+    std::condition_variable cv_;
     std::stop_source stop_;
 
     bool is_empty([[maybe_unused]] unique_lock& lck) const {
