@@ -15,5 +15,6 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 add_executable(arcanum main.cpp)
 
 add_subdirectory(lib/cache)
+add_subdirectory(lib/mqueue)
 
 add_subdirectory(examples)
