@@ -1,0 +1,8 @@
+name: CMake
+
+on:
+  push:
+
+jobs:
+  ubuntu:
+    uses: ./.github/workflows/mqueue.yaml
