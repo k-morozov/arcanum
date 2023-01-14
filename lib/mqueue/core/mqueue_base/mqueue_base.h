@@ -50,12 +50,19 @@ class mqueue_base {
         using namespace std::chrono_literals;
         // @TODO think: using in cv_any?
         unique_lock lck(m_);
-        do {
-            cv_.wait_for(lck, token, wait_timeout * 1s, [this, &lck] { return !is_empty(lck); });
+        while (true) {
+            const bool is_timeout = !cv_.wait_for(
+                lck, token, wait_timeout * 1s, [this, &lck] { return !tasks_.empty(); });
             if (token.stop_requested()) {
                 return {};
             }
-        } while (is_empty(lck));
+            if (!is_empty(lck)) {
+                break;
+            }
+            if (is_timeout) {
+                return {};
+            }
+        };
 
         return pop_impl(lck);
     }
@@ -73,14 +80,6 @@ class mqueue_base {
 
     bool is_empty([[maybe_unused]] unique_lock& lck) const {
         return tasks_.empty();
-    }
-
-    [[deprecated("cv wo it")]] [[nodiscard]] pop_t pop(unique_lock& lck) {
-        if (is_empty(lck)) {
-            return {};
-        }
-
-        return pop_impl(lck);
     }
 
     [[nodiscard]] pop_t pop_impl([[maybe_unused]] unique_lock& lck) {

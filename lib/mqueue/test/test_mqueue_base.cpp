@@ -31,16 +31,14 @@ class Basic : public ::testing::Test {
         test_queue q;
 
         schedule_tasks(q, config);
+        wait_produce(config.count_producers);
 
         execute_tasks(q, config.count_consumers);
+        wait_consume(q, config);
 
-        wait_produce(config.count_producers);
-        wait_consume(config.count_consumers);
-
-        ASSERT_TRUE(q.empty());
-        //			<< "count_producers=" << count_producers
-        //			<< "count_consumers=" << count_consumers
-        //			<< "count_task_for_producer=" << count_task_for_producer;
+        ASSERT_TRUE(q.empty()) << "count_producers=" << count_producers
+                               << "count_consumers=" << count_consumers
+                               << "count_task_for_producer=" << count_task_for_producer;
 
         check_data(config.task_size);
 
@@ -53,6 +51,7 @@ class Basic : public ::testing::Test {
         for (int i = 0; i < config.count_producers; i++) {
             fproducers_.emplace_back(
                 std::make_shared<future_t>(std::async(std::launch::async, [&q, i, config, this] {
+                    int push_tasks = 0;
                     for (int j = config.count_task_for_producer * i;
                          j < config.count_task_for_producer * (i) + config.count_task_for_producer;
                          j++) {
@@ -60,7 +59,9 @@ class Basic : public ::testing::Test {
                             std::lock_guard lck(m_);
                             data_[j]++;
                         });
+                        push_tasks++;
                     }
+                    return push_tasks;
                 })));
         };
         fconsumers_.reserve(config.count_consumers);
@@ -68,42 +69,66 @@ class Basic : public ::testing::Test {
 
     void wait_produce(const int count_worker) {
         ASSERT_EQ(fproducers_.size(), count_worker);
+        int all_tasks = 0;
         for (auto& f : fproducers_) {
             ASSERT_TRUE(f) << "count_worker=" << count_worker;
-            (*f).get();
+            const int current_task = (*f).get();
+            std::cerr << "producer push tasks=" << current_task << std::endl;
+            all_tasks += current_task;
         }
+        std::cerr << "produce tasks=" << all_tasks << std::endl;
     }
 
   private:
-    using future_t = std::future<void>;
+    using future_t = std::future<int>;
     using task_t = std::shared_ptr<future_t>;
+
+    using future_consume_t = std::future<int>;
+    using task_consume_t = std::shared_ptr<future_consume_t>;
 
     std::mutex m_;
     std::unordered_map<int, int> data_;
 
     std::vector<task_t> fproducers_;
-    std::vector<task_t> fconsumers_;
+    std::vector<task_consume_t> fconsumers_;
 
     void execute_tasks(test_queue& q, const int count_consumers) {
         for (int i = 0; i < count_consumers; i++) {
             fconsumers_.emplace_back(
-                std::make_shared<future_t>(std::async(std::launch::async, [&q] {
+                std::make_shared<future_consume_t>(std::async(std::launch::async, [&q]() -> int {
+                    int done_task = 0;
                     while (!q.empty()) {
                         auto task = q.wait_and_pop();
-                        if (!task)
-                            break;
+                        if (!task) {
+                            std::cerr << "broken task" << std::endl;
+                            continue;
+                        }
                         (*task)();
+                        done_task++;
                     }
+                    return done_task;
                 })));
         }
     }
 
-    void wait_consume(const int count_worker) {
-        ASSERT_EQ(fconsumers_.size(), count_worker);
+    void wait_consume(const test_queue& test_queue, const Config config) {
+        std::cerr << "===[p=" << config.count_producers << "]====[c=" << config.count_consumers
+                  << "]===[tasks=" << config.count_producers * config.count_task_for_producer
+                  << "]===" << std::endl;
+        ASSERT_EQ(fconsumers_.size(), config.count_consumers);
+        int all_done_task = 0;
         for (auto& f : fconsumers_) {
             ASSERT_TRUE(f);
-            (*f).get();
+            const int current_task = (*f).get();
+            std::cerr << "consume done task=" << current_task << std::endl;
+            all_done_task += current_task;
         }
+        std::cerr << "======="
+                  << "[q is_empty=" << std::boolalpha << test_queue.empty()
+                  << "]========" << std::endl
+                  << std::endl;
+        ASSERT_TRUE(test_queue.empty());
+        ASSERT_EQ(all_done_task, config.count_producers * config.count_task_for_producer);
     }
 
     void check_data(const int size) const {
@@ -143,14 +168,15 @@ TEST_F(Basic, test_no_task) {
 }
 
 TEST_F(Basic, test_early_shutdown_after_schedule) {
-    //    const Config config{
-    //        .count_producers = 8,
-    //        .count_consumers = 8,
-    //        .count_task_for_producer = 1'000,
-    //    };
-    //
-    //    test_queue q;
-    //
-    //    schedule_tasks(q, config);
-    //    wait_produce(config.count_producers);
+    const Config config{
+        .count_producers = 8,
+        .count_consumers = 8,
+        .count_task_for_producer = 1'000,
+    };
+    {
+        test_queue q;
+
+        schedule_tasks(q, config);
+        wait_produce(config.count_producers);
+    }
 }
