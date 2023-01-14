@@ -12,8 +12,7 @@
 template <class Callable, typename R, typename... Args>
 constexpr detail::vtable<R, Args...> vtable_for{
     [](void* p, Args... args) -> R {
-        // @TODO think about std::launder
-        return std::launder(static_cast<Callable*>(p))->operator()(std::forward<Args>(args)...);
+        return static_cast<Callable*>(p)->operator()(std::forward<Args>(args)...);
     },
     [](void* p) { std::destroy_at(static_cast<Callable*>(p)); }};
 
