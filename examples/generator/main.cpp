@@ -5,44 +5,8 @@
 #include <coroutine>
 #include <iostream>
 
-struct resumable {
-    struct promise_type;
-    using coro_handle = std::coroutine_handle<promise_type>;
-
-    struct promise_type {
-        resumable get_return_object() {
-            return resumable(coro_handle::from_promise(*this));
-        }
-        auto initial_suspend() {
-            std::cout << "init" << std::endl;
-            return std::suspend_always();
-        }
-        auto final_suspend() noexcept {
-            std::cout << "final" << std::endl;
-            return std::suspend_always();
-        }
-        void return_void() {
-            std::cout << "return" << std::endl;
-        }
-        void unhandled_exception() {
-            std::terminate();
-        }
-    };
-
-    explicit resumable(coro_handle handle) : handle_{handle} {};
-    bool resume() {
-        if (!handle_.done()) {
-            handle_.resume();
-        }
-        return !handle_.done();
-    }
-    ~resumable() {
-        handle_.destroy();
-    }
-
-  private:
-    coro_handle handle_;
-};
+#include "generator.h"
+#include "resumable.h"
 
 resumable
 foo() {
@@ -51,11 +15,59 @@ foo() {
     std::cout << "world" << std::endl;
 }
 
-int
-main() {
+generator<int>
+natural_nums() {
+    std::cout << "[coro] started natural_nums" << std::endl;
+    int value = 1;
+    while (value < 10) {
+        std::cout << "[coro] prepare to coro" << std::endl;
+        co_yield value;
+        std::cout << "[coro] from coro" << std::endl;
+        value++;
+    }
+}
+
+generator<int>
+sequence(int start, int finish, int step) {
+    std::cout << "[coro] started natural_nums" << std::endl;
+    int num{};
+    for (num = start; num < finish; num += step) {
+        std::cout << "[coro] prepare to coro" << std::endl;
+        co_yield num;
+        std::cout << "[coro] from coro" << std::endl;
+    }
+}
+
+void
+example_resumable() {
     auto c = foo();
     std::cout << "size coro = " << sizeof(c) << std::endl;
     c.resume();
     std::cout << "===" << std::endl;
     c.resume();
+}
+
+void
+example_generator() {
+    auto c = natural_nums();
+    //	std::cout << "size coro = " << sizeof(c) << std::endl;
+    std::cout << "[func] value=" << c.current_value() << std::endl;
+    c.move_next();
+    std::cout << "[func] value=" << c.current_value() << std::endl;
+    c.move_next();
+    std::cout << "[func] value=" << c.current_value() << std::endl;
+}
+
+void
+example_generator_iterator() {
+    for (auto value : sequence(2, 32, 2)) {
+        std::cerr << "value=" << value << std::endl;
+    }
+}
+
+int
+main() {
+    //	example_resumable();
+    //	example_generator();
+    example_generator_iterator();
 }
