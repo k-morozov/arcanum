@@ -24,11 +24,11 @@ struct resumable_no_own {
         }
     };
 
-    resumable_no_own(std::coroutine_handle<promise_type>) {
+    explicit resumable_no_own(std::coroutine_handle<promise_type>) {
     }
     resumable_no_own(const resumable_no_own&) {
     }
-    resumable_no_own(resumable_no_own&&) {
+    resumable_no_own(resumable_no_own&&) noexcept {
     }
 };
 

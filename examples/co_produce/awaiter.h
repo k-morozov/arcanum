@@ -22,7 +22,7 @@ class evt_awaiter_t {
         evt_awaiter_t& event_;
         coro_t coro_ = nullptr;
 
-        bool await_ready() const noexcept {
+        [[nodiscard]] bool await_ready() const noexcept {
             return event_.is_set();
         }
         void await_resume() {

@@ -24,25 +24,25 @@ producer() {
 
 resumable_no_own
 consumer1() {
-    std::cout << "Consumer1 started" << std::endl;
+    std::cout << "[Consumer1] started" << std::endl;
     co_await g_evt;
-    std::cout << "Consumer1 resumed" << std::endl;
+    std::cout << "[Consumer1] resumed" << std::endl;
 };
 
 resumable_no_own
 consumer2() {
-    std::cout << "Consumer2 started" << std::endl;
+    std::cout << "[Consumer2] started" << std::endl;
     co_await g_evt;
-    std::cout << "Consumer2 resumed" << std::endl;
+    std::cout << "[Consumer2] resumed" << std::endl;
 };
 
 resumable_no_own
 consumer3() {
-    std::cout << "Consumer3 started" << std::endl;
+    std::cout << "[Consumer3] started" << std::endl;
     co_await g_evt;
-    std::cout << "Consumer3 resumed" << std::endl;
+    std::cout << "[Consumer3] resumed" << std::endl;
     co_await g_evt;
-    std::cout << "Consumer3 resumed again" << std::endl;
+    std::cout << "[Consumer3] resumed again" << std::endl;
 };
 
 int
