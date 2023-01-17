@@ -26,11 +26,13 @@ class evt_awaiter_t {
             return event_.is_set();
         }
         void await_resume() {
+            std::cout << "[awaiter] resume" << std::endl;
             event_.reset();
         }
         void await_suspend(coro_t coro) noexcept {
             coro_ = coro;
             event_.push_awaiter(*this);
+            std::cout << "[awaiter] suspend" << std::endl;
         }
     };
 
@@ -49,6 +51,7 @@ class evt_awaiter_t {
         lst_.push_back(a);
     }
     void set() noexcept {
+        std::cout << "[awaiter] call set" << std::endl;
         set_ = true;
         std::list<awaiter> to_resume;
         to_resume.splice(to_resume.begin(), lst_);
